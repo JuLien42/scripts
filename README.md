@@ -1,2 +1,5 @@
 scripts
 =======
+
+- postgreSQL
+- Vmware
