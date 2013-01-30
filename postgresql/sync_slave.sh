@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 master_host=db-01

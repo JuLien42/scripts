@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #####################################
-# delete all snapshot
+# delete all snapshots
 # jlacroix
 #
 # required: http://code.google.com/p/pysphere/
