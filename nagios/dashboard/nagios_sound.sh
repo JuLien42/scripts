@@ -51,7 +51,7 @@ while [ 1 ]; do
 	error=0
 	sources=$(cat $CONF_FILE | grep source | awk '{print $5}')
 	for source in $sources; do
-		return=$(echo -e "GET services\nColumns: host_name description state\nFilter: state != 0\nFilter: acknowledged = 0\nFilter: notifications_enabled = 1\nFilter: acknowledged != 1\n" | nc $source 6557)
+		return=$(echo -e "GET services\nColumns: host_name description state\nFilter: state != 0\nFilter: acknowledged = 0\nFilter: scheduled_downtime_depth = 0\nFilter: host_scheduled_downtime_depth = 0\nFilter: notifications_enabled = 1\nFilter: acknowledged != 1\n" | nc $source 6557)
 		if [ "$return" != "" ]; then
 			error=1
 		fi
