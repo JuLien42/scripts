@@ -1,0 +1,22 @@
+--- class/centreonGraph.class.php-old	2013-03-21 14:51:49.000000000 +0100
++++ class/centreonGraph.class.php	2013-03-21 15:25:19.000000000 +0100
+@@ -537,7 +537,7 @@
+ 					/** **********************************
+ 					 * Copy Template values
+ 					 */
+-					$DBRESULT2 = $this->DB->query("SELECT * FROM giv_components_template WHERE ( host_id = '".$metric["host_id"]."' OR host_id IS NULL ) AND ( service_id = '".$metric["service_id"]."' OR service_id IS NULL ) AND ds_name  = '".$this->DB->escape($metric["metric_name"])."' ORDER BY host_id DESC");
++					$DBRESULT2 = $this->DB->query("SELECT * FROM giv_components_template WHERE ( host_id = '".$metric["host_id"]."' OR host_id IS NULL ) AND ( service_id = '".$metric["service_id"]."' OR service_id IS NULL ) AND (ds_name  = '".$this->DB->escape($metric["metric_name"])."' OR ds_name = '*') ORDER BY ds_name DESC, host_id DESC");
+ 					$ds_data = $DBRESULT2->fetchRow();
+ 					$DBRESULT2->free();
+ 
+@@ -581,6 +581,10 @@
+ 							$ds_data = $ds;
+ 						}
+ 					}
++					if ($ds_data["ds_name"] == '*') {
++						$ds_data["ds_color_line"] = $this->getOVDColor($metric["metric_id"]);
++						$ds_data["ds_color_area"] = $ds_data["ds_color_line"];
++					}
+ 
+ 					/** **********************************
+ 					 * Fetch Datas
