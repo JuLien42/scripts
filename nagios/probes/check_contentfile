@@ -1,0 +1,55 @@
+#!/bin/bash
+##############################
+# JuLien42
+#
+# check if the content exist in the last n minutes
+#
+# ./check_contentfile <file> <minutes> <content1&content2&contentn>
+#
+#############################
+
+usage() {
+	echo "$0 [logfile] [minutes] [pattern|pattern2|...]" > /dev/stderr
+	exit 1
+}
+
+
+if [ $# -lt 2 ]; then
+	usage
+fi
+
+logfile=$1
+minutes=$2
+
+shift
+shift
+
+if [ ! -f $logfile ]; then
+	echo "invalid file $logfile" > /dev/stderr
+	exit 1
+fi
+
+str=""
+for min in $(seq 0 $minutes); do
+	if [ "$str" ]; then 
+		str="${str}|"
+	fi
+	str="${str}$(date +"%b *%-d %H:%M:" --date="$min minutes ago")"
+done
+
+pattern=""
+for arg in $*; do
+        if [ "$pattern" ]; then
+                pattern="${pattern}.*"
+        fi
+	pattern="${pattern}$arg"
+done
+
+result=$(cat $logfile ${logfile}.1 | grep -E "$str" | grep "$pattern")
+
+if [ "$result" ]; then
+	echo "OK - $result"
+	exit 0
+fi
+echo "KO - pattern not found: \"$*\" in $logfile since $minutes minutes" 
+exit 2
