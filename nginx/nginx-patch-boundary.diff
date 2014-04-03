@@ -1,0 +1,147 @@
+patch for nginx - http_proxy_module
+
+Remove in request_body for proxy_cache_key,
+boundary present in multipart POST HTTP requests
+
+
+ proxy_cache_key "$request_uri|$request_body";
+ 
+
+warning: can cache HTTP requests with 1 POST var
+
+Tested on nginx-1.2.6
+
+diff --git a/src/http/modules/ngx_http_proxy_module.c b/src/http/modules/ngx_http_proxy_module.c
+index d8138a8..bab4c34 100644
+--- a/src/http/modules/ngx_http_proxy_module.c
++++ b/src/http/modules/ngx_http_proxy_module.c
+@@ -625,6 +625,120 @@ static ngx_path_init_t  ngx_http_proxy_temp_path = {
+ };
+ 
+ 
++	ngx_int_t
++ngx_http_complex_value_boundary(ngx_http_request_t *r, ngx_http_complex_value_t *val,
++		ngx_str_t *value)
++{
++	size_t                        len;
++	ngx_http_script_code_pt       code;
++	ngx_http_script_len_code_pt   lcode;
++	ngx_http_script_engine_t      e;
++
++	if (val->lengths == NULL) {
++		*value = val->value;
++		return NGX_OK;
++	}
++
++	ngx_http_script_flush_complex_value(r, val);
++
++	ngx_memzero(&e, sizeof(ngx_http_script_engine_t));
++
++	e.ip = val->lengths;
++	e.request = r;
++	e.flushed = 1;
++
++	len = 0;
++	int i = 0; // PATCH
++	int aLen[1024]; // PATCH
++
++	while (*(uintptr_t *) e.ip) {
++		lcode = *(ngx_http_script_len_code_pt *) e.ip;
++		//		        len += lcode(&e); // PATCH REMOVE
++		aLen[i] = lcode(&e); // PATCH
++		len += aLen[i++]; // PATCH
++	}
++
++	value->len = len;
++	value->data = ngx_pnalloc(r->pool, len);
++	if (value->data == NULL) {
++		return NGX_ERROR;
++	}
++
++	e.ip = val->values;
++	e.pos = value->data;
++	e.buf = *value;
++
++	// PATCH START
++	ngx_str_t tmp, old;
++	char *oldp; // to free tmp.data
++	old.len = 0;
++	old.data = (u_char *)"";
++	i = 0;
++	int j, k, newline, remove;
++	// PATCH END
++	while (*(uintptr_t *) e.ip) {
++
++		code = *(ngx_http_script_code_pt *) e.ip;
++		code((ngx_http_script_engine_t *) &e);
++
++		// PATCH START
++		tmp.len = (int)aLen[i];
++		tmp.data = malloc(sizeof(u_char *) * (tmp.len + 1));
++		for (k = 0; k < (int)tmp.len; k++) // copy
++			tmp.data[k] = e.buf.data[old.len + k];
++		oldp = (char *)tmp.data;
++		//		printf("tmp.data %d:%s\n", (int)tmp.len, (char *)tmp.data);
++		if (!strncmp((char *)tmp.data, "--", 2)) { // if boundary
++			remove = 0;
++			newline = 1;
++			for (k = 0; k <= aLen[i]; k++) { // remove start
++				//				printf("%d < %d: %02X\n", k, aLen[i], (char)tmp.data[k]);
++				if (newline && (!strncmp((char *)&tmp.data[k], "--", 2) ||
++							!strncmp((char *)&tmp.data[k], "Content", 7))) {
++					remove = 1;
++				}
++				newline = 0;
++				if (tmp.data[k] == '\n')
++					newline = 1;
++				if (tmp.data[k] == '\n' && k > 2) {
++					if (!remove)
++						break;
++					tmp.data = &tmp.data[k];
++					aLen[i] -= k;
++					k = -1;
++					remove = 0;
++				}
++			}
++			for (k = aLen[i] - 2; k >= 0; k--) { // remove end
++				if (tmp.data[k] == '\n' && strncmp((char *)&tmp.data[k + 1], "--", 2)) {
++					aLen[i] = k;
++					break;
++				}
++			}
++
++		}
++		j = 2;
++		for (j = 0; j < aLen[i]; j++)
++			e.buf.data[(int)old.len + j] = tmp.data[j];
++		e.buf.data[(int)old.len + j] = 0;
++		free(oldp);
++		old.len += aLen[i++];
++		e.buf.len = old.len;
++		// PATCH END
++	}
++	*value = e.buf;
++
++	// DEBUG
++	//	for (k = 0; k < (int)(*value).len; k++) {
++	//		if (((char)(*value).data[k] < 32 || (*value).data[k] > 126) && (*value).data[k] != 10) printf(" #%02X ", (char)(*value).data[k]);
++	//		else printf("%c", (char)(*value).data[k]);
++	//	}
++	printf("\n");
++
++	return NGX_OK;
++}
++
++
+ 	static ngx_int_t
+ ngx_http_proxy_handler(ngx_http_request_t *r)
+ {
+@@ -838,7 +952,7 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
+ 
+ 	if (plcf->cache_key.value.len) {
+ 
+-		if (ngx_http_complex_value(r, &plcf->cache_key, key) != NGX_OK) {
++		if (ngx_http_complex_value_boundary(r, &plcf->cache_key, key) != NGX_OK) {
+ 			return NGX_ERROR;
+ 		}
+ 
