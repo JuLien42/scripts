@@ -127,7 +127,7 @@ index d8138a8..bab4c34 100644
 +	//		if (((char)(*value).data[k] < 32 || (*value).data[k] > 126) && (*value).data[k] != 10) printf(" #%02X ", (char)(*value).data[k]);
 +	//		else printf("%c", (char)(*value).data[k]);
 +	//	}
-+	printf("\n");
++	//	printf("\n");
 +
 +	return NGX_OK;
 +}

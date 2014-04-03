@@ -1,6 +1,10 @@
 SCRIPTS
 =======
 
+WEB
+-------
+- Nginx
+
 BDD
 -------
 - postgreSQL
