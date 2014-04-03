@@ -11,9 +11,9 @@ warning: can't cache HTTP requests with more than 1 POST var
 
 Tested on nginx-1.4.7
 
-diff --git a/src/http/modules/ngx_http_proxy_module2.c b/src/http/modules/ngx_http_proxy_module.c
+diff --git a/src/http/modules/ngx_http_proxy_module.c b/src/http/modules/ngx_http_proxy_module.c
 index 5e62caa..5f90b3e 100644
---- a/src/http/modules/ngx_http_proxy_module2.c
+--- a/src/http/modules/ngx_http_proxy_module.c
 +++ b/src/http/modules/ngx_http_proxy_module.c
 @@ -627,6 +627,121 @@ static ngx_path_init_t  ngx_http_proxy_temp_path = {
  };
