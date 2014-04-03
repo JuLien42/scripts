@@ -7,7 +7,7 @@ boundary present in multipart POST HTTP requests
  proxy_cache_key "$request_uri|$request_body";
  
 
-warning: can cache HTTP requests with 1 POST var
+warning: can't cache HTTP requests with more than 1 POST var
 
 Tested on nginx-1.2.6
 
