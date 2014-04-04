@@ -1,0 +1,35 @@
+proxy_cache_path /tmp/nginx/ levels=1:2 keys_zone=cachedir:30m inactive=60m max_size=1g;
+
+server {
+        listen 80 default;
+
+        log_format cache '$remote_addr - $remote_user [$time_local]  '
+                '"$request" $upstream_cache_status $status $body_bytes_sent '
+                '"$http_referer" "$http_user_agent"';
+
+        access_log /var/log/nginx/cache_access.log cache;
+        error_log /var/log/nginx/cache_error.log;
+
+
+        location / {
+
+                proxy_pass https://77.72.90.101;
+                proxy_cache cachedir;
+                client_max_body_size 1m;
+                client_body_buffer_size 1m;
+                client_body_in_single_buffer on;
+
+                proxy_cache_methods POST;
+                proxy_cache_key "$request_uri|$request_body";
+                proxy_buffers 100 32k;
+                proxy_buffer_size 1m;
+                proxy_cache_valid 30m;
+                proxy_cache_use_stale updating;
+                add_header X-Cached $upstream_cache_status;
+
+                proxy_redirect off;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+}

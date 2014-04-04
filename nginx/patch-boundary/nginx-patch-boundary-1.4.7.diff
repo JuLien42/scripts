@@ -63,8 +63,11 @@ index 5e62caa..5f90b3e 100644
 +	e.buf = *value;
 +
 +	// PATCH START
++       #include <ngx_md5.h>
 +	ngx_str_t tmp, old;
 +	char *oldp; // to free tmp.data
++       u_char key[MD5_DIGEST_LENGTH];
++       ngx_md5_t md5;
 +	old.len = 0;
 +	old.data = (u_char *)"";
 +	i = 0;
@@ -109,9 +112,14 @@ index 5e62caa..5f90b3e 100644
 +					break;
 +				}
 +			}
-+
++                       ngx_md5_init(&md5);
++                       ngx_md5_update(&md5, tmp.data, aLen[i]);
++                       ngx_md5_final(key, &md5);
++                       aLen[i] = MD5_DIGEST_LENGTH * 2;
++                       for(k = 0; k < 16; ++k)
++                               sprintf(&((char *)tmp.data)[k*2], "%02x", (unsigned int)key[k]);
++               //      printf("key: %s\n", tmp.data);
 +		}
-+		j = 2;
 +		for (j = 0; j < aLen[i]; j++)
 +			e.buf.data[(int)old.len + j] = tmp.data[j];
 +		e.buf.data[(int)old.len + j] = 0;
