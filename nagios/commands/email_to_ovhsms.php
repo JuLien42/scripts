@@ -40,7 +40,10 @@ include('emailParser.php');
 $input = stream_get_contents(STDIN);
 $oEmailParser = new emailParser($input);
 
-foreach ($oEmailParser->getTo() as $to)
+$aTo = $oEmailParser->getTo();
+array_push($aTo, $oEmailParser->getHeader('Delivered-To'));
+
+foreach ($aTo as $to)
 	if (strpos($to, "sms+") !== false) {
 		$number = substr($to, 3, strpos($to, '@') - 3);
 		break;
