@@ -55,8 +55,8 @@ file_put_contents('/tmp/sms.log', "number: ".$number."\n".$message."\n----------
 try {
  $soap = new SoapClient("https://www.ovh.com/soapi/soapi-re-1.63.wsdl");
 
- //telephonySmsUserSend
- $result = $soap->telephonySmsUserSend($login, $pass, $account, $from, $number, $message, "", "", "", "", "", "", true);
+ //telephonySmsUserSend http://www.ovh.com/soapi/fr/?method=telephonySmsUserSend
+ $result = $soap->telephonySmsUserSend($login, $pass, $account, $from, $number, $message, 60, 1, 0, 3, 1, "TAG", true);
  echo "telephonySmsUserSend successfull\n";
  print_r($result);
 } catch(SoapFault $fault) {
